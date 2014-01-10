@@ -6,3 +6,5 @@ avr-objcopy -O ihex -R .eeprom main.elf main.hex
 avr-objcopy -I ihex main.hex -O binary main.bin
 
 avrdude -p t85 -c usbasp -P usb -U lfuse:w:0xe2:m -U hfuse:w:0xdd:m -U efuse:w:0xff:m -U flash:w:main.hex
+
+Remove-Item .\main.o, .\usiTwiSlave.o, .\main.elf, .\main.hex, .\main.bin -ErrorAction SilentlyContinue

@@ -1,5 +1,3 @@
-#define F_CPU 8000000UL
-
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
@@ -8,11 +6,13 @@
 #include "usiTwiSlave.h"
 #include "io_macros.h"
 #include "config.h"
+#include "DS18B20.h"
 
 //====================
 #define ReadRegister(address) (Register[address])
 #define slaveAddress Register[I2C_ADDRESS]
-
+#define ONEWIRE_PORT PORTB
+#define ONEWIRE_PORTIN
 static uint8_t EEMEM eeprom_buffor[REGISTER_SIZE];
 static uint8_t EEMEM is_first_run;
 static uint8_t Register[REGISTER_SIZE] = {0};
@@ -50,23 +50,31 @@ void i2cWriteToRegister(uint8_t reg, uint8_t value)
 		usiTwiSlaveSetAddress(slaveAddress);
 }
 
-void Init(){
-	DDRB = 0x00;
-	PORTB = 0xFF;
-}
-
 int main(void){
-	Init();
 	Init_Register();
-
+	
 	_delay_ms(100);
 
 	usiTwiSlaveInit(slaveAddress, i2cReadFromRegister, i2cWriteToRegister);
 	
+	onewire_init();
+	
+	Register[2] = ds18b20_set_resolution(DS18B20_12BIT_RESOLUTION, 1);
+	
 	sei();
 
+	uint8_t i = 0;
 	while(1){	
 		_delay_ms(50);
+		if(i++ >= 20){
+			int16_t value = 0;
+			
+			Register[1] = ds18b20_read_temperature(&value);
+			
+			Register[3] = value >> 2;
+			
+			i = 0;
+		}
 	}
 	return 0;
 }
